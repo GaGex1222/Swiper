@@ -1,9 +1,9 @@
+import PermissionRequiredModal from '@/components/PermissionRequiredModal';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react'; // Import useState
-import { Image, Linking, StyleSheet, Text, TouchableOpacity, View } from 'react-native'; // Remove Alert
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native'; // Remove Alert
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { handleGalleryAccess } from '../../utils/accessFunctions';
-import PermissionRequiredModal from '@/components/PermissionRequiredModal';
+import { handleGalleryAccess } from '../../utils/mediaFunctions';
 
 const permissionIllustration = require('@/assets/images/swipe_files.png');
 
