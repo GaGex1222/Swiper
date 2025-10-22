@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { Dimensions, Image, StatusBar, StyleSheet, Text, View } from 'react-native';
+import { Dimensions, StatusBar, StyleSheet, Text, View } from 'react-native';
 // ייבוא מודרני מ-gesture-handler
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
@@ -11,7 +11,8 @@ import Animated, {
     useSharedValue,
     withSpring,
 } from 'react-native-reanimated';
-import { Video } from 'expo-av';
+import { useVideoPlayer, VideoSource, VideoView } from 'expo-video';
+import { Image } from 'expo-image';
 
 import { getRandomAsset } from '@/utils/mediaFunctions';
 import { Asset } from 'expo-media-library';
@@ -28,7 +29,7 @@ interface Item {
 // --- Constants ---
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH: number = SCREEN_WIDTH * 0.85; 
-const CARD_HEIGHT: number = CARD_WIDTH * 1.25;
+const CARD_HEIGHT: number = CARD_WIDTH * 1.60;
 const SWIPE_THRESHOLD: number = CARD_WIDTH * 0.35;
 const SPRING_CONFIG = { damping: 20, stiffness: 150, mass: 1 };
 
@@ -40,7 +41,10 @@ export const SwipableCard: React.FC = () => { // Component now receives no props
     const [currentAsset, setCurrentAsset] = useState<Asset>()
     const translateX = useSharedValue(0);
     const translateY = useSharedValue(0);
-
+    const player = useVideoPlayer(currentAsset?.uri as VideoSource, player => {
+        player.loop = true;
+        player.play();
+    });
 
     
     useEffect(() => {
@@ -154,22 +158,18 @@ return (
                 <Animated.View style={[styles.cardContainer, cardStyle]}>
                     
                     {currentAsset?.mediaType === 'video' && currentAsset?.uri ?  (
-                        // Show video if type is 'video'
-                        <Video
-                        source={{ uri: currentAsset.uri }}
-                        rate={1.0}
-                        volume={1.0}
-                        isMuted={false}
-                        shouldPlay
-                        isLooping
-                        style={{ width: 300, height: 200 }}
+                        <VideoView 
+                            player={player} 
+                            allowsPictureInPicture
+                            style={{ flex: 1, width: '100%', height: '100%', }}
+                            contentFit='cover'
                         />
                     ) : currentAsset?.mediaType === 'photo' && currentAsset?.uri ? (
                         // Show image if type is 'image' and URI is present
                         <Image 
                             source={{ uri: currentAsset.uri }} 
                             style={styles.cardImage} 
-                            resizeMode="cover" 
+                            contentFit="fill" // or "contain", "fill", "none", "scale-down"
                         />
                     ) : (
                         // Fallback placeholder

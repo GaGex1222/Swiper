@@ -19,7 +19,7 @@ export default function PermissionScreen() {
 
     if (status) {
       console.log("Gallery permissions granted. Moving to next step.");
-      router.replace('/(onboarding)/playTest');
+      router.replace('/(onboarding)/playtest');
     } else {
       console.log("Gallery permissions denied. Showing custom alert.");
       setIsAlertVisible(true);
