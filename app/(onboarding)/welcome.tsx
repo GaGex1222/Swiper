@@ -27,7 +27,7 @@ export default function WelcomeScreen() {
         styles.bottomContent, 
         { paddingBottom: insets.bottom + 50 } 
       ]}>
-        <Text style={styles.mainTitle}>Welcome to Swipe!</Text>
+        <Text style={styles.mainTitle}>Welcome to Swiper!</Text>
         <Text style={styles.subtitle}>
           The simplest way to clear your gallery while rediscovering your best memories.
         </Text>

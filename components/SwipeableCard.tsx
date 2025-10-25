@@ -1,6 +1,7 @@
+import { Image } from 'expo-image';
+import { useVideoPlayer, VideoSource, VideoView } from 'expo-video';
 import React, { useCallback, useEffect, useState } from 'react';
 import { Dimensions, StatusBar, StyleSheet, Text, View } from 'react-native';
-// ייבוא מודרני מ-gesture-handler
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
     Extrapolate,
@@ -11,33 +12,20 @@ import Animated, {
     useSharedValue,
     withSpring,
 } from 'react-native-reanimated';
-import { useVideoPlayer, VideoSource, VideoView } from 'expo-video';
-import { Image } from 'expo-image';
 
 import { getRandomAsset } from '@/utils/mediaFunctions';
+import { addTrashItem, TrashItem } from '@/utils/storageFunctions';
 import { Asset } from 'expo-media-library';
 
 
-// --- Type Definitions ---
-interface Item {
-    id: number;
-    color: string;
-    text: string;
-}
 
-
-// --- Constants ---
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH: number = SCREEN_WIDTH * 0.85; 
 const CARD_HEIGHT: number = CARD_WIDTH * 1.60;
 const SWIPE_THRESHOLD: number = CARD_WIDTH * 0.35;
 const SPRING_CONFIG = { damping: 20, stiffness: 150, mass: 1 };
 
-
-/**
- * --- Swipable Card Component (Modern Reanimated API) ---
- */
-export const SwipableCard: React.FC = () => { // Component now receives no props
+export const SwipableCard: React.FC = () => { 
     const [currentAsset, setCurrentAsset] = useState<Asset>()
     const translateX = useSharedValue(0);
     const translateY = useSharedValue(0);
@@ -64,10 +52,24 @@ export const SwipableCard: React.FC = () => { // Component now receives no props
         if (newAsset) {
             setCurrentAsset(newAsset);
         }
+        if(currentAsset) {
+            console.log("Current asset", currentAsset)
+            if(direction == "left") {
+                const item: TrashItem = {
+                    "id": currentAsset.id, 
+                    "mediaType": currentAsset.mediaType as "photo" | "video", 
+                    "uri": currentAsset.uri
+                }
+                console.log(item, " Has been added to the trashh")
+                await addTrashItem(item)
+            } else {
+                //add a storage for kept items for them to not appear again
+            }
+        }
         // Reset the card position and load the next image
         translateX.value = 0;
         translateY.value = 0;
-    }, [translateX, translateY]); 
+    }, [currentAsset, translateX, translateY]); 
 
     // --- Gesture Definition using the modern API (Gesture.Pan) ---
     const panGesture = Gesture.Pan()
@@ -317,7 +319,6 @@ const styles = StyleSheet.create({
     cardImage: {
         width: '100%',
         height: '100%',
-        borderRadius: 20,
         position: 'absolute',
     },
 
