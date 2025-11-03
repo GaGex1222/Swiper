@@ -19,7 +19,7 @@ export async function handleGalleryAccess() {
   return true
 }
 
-export async function getRandomAsset(): Promise<MediaLibrary.Asset | null> {
+export async function getRandomAsset(): Promise<MediaLibrary.Asset[] | null> {
     const { status } = await MediaLibrary.requestPermissionsAsync();
     if (status !== 'granted') {
         console.error("Permission not granted to access media library.");
@@ -32,27 +32,30 @@ export async function getRandomAsset(): Promise<MediaLibrary.Asset | null> {
     });
 
     const totalCount = album.totalCount;
+    console.log("Total count of assets", totalCount)
     if (totalCount === 0) {
         return null;
     }
 
     const randomIndex = Math.floor(Math.random() * totalCount);
     const randomAssets = await MediaLibrary.getAssetsAsync({
-        first: 1,
+        first: 10,
         mediaType: [MediaLibrary.MediaType.photo, MediaLibrary.MediaType.video],
         after: randomIndex.toString(), 
     });
+    console.log(randomAssets['assets'].length)
 
-    return randomAssets.assets.length > 0 ? randomAssets.assets[0] : null;
+    return randomAssets.assets.length > 0 ? randomAssets.assets : null;
 }
 
 export async function deleteAssets(assets: TrashItem[]) {
-    try {
-        const ids = assets.map((item) => {
-            return item.id
-        })
-        await MediaLibrary.deleteAssetsAsync(ids)
-    } catch (error){
-        console.error("Error deleting assets from device: ", error)
+    const ids = assets.map((item) => {
+        return item.id
+    })
+    const success = await MediaLibrary.deleteAssetsAsync(ids)
+    if(success){
+        return true
+    } else {
+        return false
     }
 }

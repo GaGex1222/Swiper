@@ -63,29 +63,28 @@ export async function addTrashItem(item: TrashItem) {
 }
 
 export async function deleteTrashItems(idsToDelete: string[]) {
-  try {
-    const jsonValue = await AsyncStorage.getItem("trash");
+  const jsonValue = await AsyncStorage.getItem("trash");
 
-    if (jsonValue !== null) {
-      const idsToDeleteSet = new Set(idsToDelete);
+  if (jsonValue !== null) {
+    const idsToDeleteSet = new Set(idsToDelete);
 
-      const currentItems: TrashItem[] = JSON.parse(jsonValue);
+    const currentItems: TrashItem[] = JSON.parse(jsonValue); 
 
-      const itemsToPermanentDelete = currentItems.filter(item => 
-        idsToDeleteSet.has(item.id) 
-      );
+    const itemsToPermanentDelete = currentItems.filter(item =>     
+      idsToDeleteSet.has(item.id) 
+    );
 
-      await deleteAssets(itemsToPermanentDelete);
-      
-      const updatedItems = currentItems.filter(item => {
-        return !idsToDeleteSet.has(item.id); 
-      });
-
-      await AsyncStorage.setItem("trash", JSON.stringify(updatedItems));
-      
-      console.log(`Successfully deleted ${idsToDelete.length} items from trash.`);
+    const success = await deleteAssets(itemsToPermanentDelete);
+    if(!success){
+      return false
     }
-  } catch (error) {
-    console.error("Error permanently deleting item from trash: ", error);
+
+    const updatedItems = currentItems.filter(item => {
+      return !idsToDeleteSet.has(item.id); 
+    });
+
+    await AsyncStorage.setItem("trash", JSON.stringify(updatedItems));
+    console.log(`Successfully deleted ${idsToDelete.length} items from trash.`);
+    return true
   }
 }

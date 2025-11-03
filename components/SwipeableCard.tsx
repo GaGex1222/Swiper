@@ -26,50 +26,52 @@ const SWIPE_THRESHOLD: number = CARD_WIDTH * 0.35;
 const SPRING_CONFIG = { damping: 20, stiffness: 150, mass: 1 };
 
 export const SwipableCard: React.FC = () => { 
-    const [currentAsset, setCurrentAsset] = useState<Asset>()
+    const [assets, setAssets] = useState<Asset[]>([])
+    const [assetPointer, setAssetPointer] = useState(0);
     const translateX = useSharedValue(0);
     const translateY = useSharedValue(0);
-    const player = useVideoPlayer(currentAsset?.uri as VideoSource, player => {
+    const player = useVideoPlayer(
+    assets[assetPointer]?.uri as VideoSource, 
+    player => {
+        if (!assets[assetPointer]) return; // don't try to play if no asset
         player.loop = true;
         player.play();
-    });
+    }
+    );
 
-    
+    const loadNewAssets = async (): Promise<Asset[]> => {
+    const assetsResult = await getRandomAsset();
+    if (!assetsResult || !assetsResult.length) return []; // guard against empty
+    setAssets(assetsResult);
+    setAssetPointer(0); // reset pointer when new assets load
+    return assetsResult;
+    };
+
     useEffect(() => {
-        const loadInitialAsset = async () => {
-            const asset = await getRandomAsset()
-            if (asset) {
-                setCurrentAsset(asset);
-            }
-        };
-
-        loadInitialAsset();
-    }, [])
+        loadNewAssets();
+    }, []);
+    
 
     // Placeholder function for swipe end. Logs the action and resets the card position.
-    const handleTestSwipeEnd = useCallback(async (direction: 'left' | 'right') => {
-        const newAsset = await getRandomAsset();
-        if (newAsset) {
-            setCurrentAsset(newAsset);
-        }
-        if(currentAsset) {
-            console.log("Current asset", currentAsset)
-            if(direction == "left") {
-                const item: TrashItem = {
-                    "id": currentAsset.id, 
-                    "mediaType": currentAsset.mediaType as "photo" | "video", 
-                    "uri": currentAsset.uri
-                }
-                console.log(item, " Has been added to the trashh")
-                await addTrashItem(item)
-            } else {
-                //add a storage for kept items for them to not appear again
-            }
-        }
-        // Reset the card position and load the next image
-        translateX.value = 0;
-        translateY.value = 0;
-    }, [currentAsset, translateX, translateY]); 
+    const handleTestSwipeEnd = useCallback(async (direction: 'left' | 'right') => {
+    const currentAsset = assets?.[assetPointer];
+    if (!currentAsset) {
+        await loadNewAssets(); // fetch new assets
+        return; // wait until next render
+    }
+
+    if (direction === 'left') {
+        await addTrashItem({
+        id: currentAsset.id,
+        mediaType: currentAsset.mediaType as "photo" | "video",
+        uri: currentAsset.uri,
+        });
+    }
+
+    setAssetPointer(prev => prev + 1);
+    translateX.value = 0;
+    translateY.value = 0;
+    }, [assetPointer, assets, translateX, translateY]);
 
     // --- Gesture Definition using the modern API (Gesture.Pan) ---
     const panGesture = Gesture.Pan()
@@ -158,28 +160,26 @@ return (
         <View style={styles.cardWrapper}>
             <GestureDetector gesture={panGesture}>
                 <Animated.View style={[styles.cardContainer, cardStyle]}>
-                    
-                    {currentAsset?.mediaType === 'video' && currentAsset?.uri ?  (
-                        <VideoView 
-                            player={player} 
+                    {
+                        assets[assetPointer]?.mediaType === 'video' && assets[assetPointer]?.uri ? (
+                            <VideoView
+                            player={player}
                             allowsPictureInPicture
-                            style={{ flex: 1, width: '100%', height: '100%', }}
-                            contentFit='cover'
-                        />
-                    ) : currentAsset?.mediaType === 'photo' && currentAsset?.uri ? (
-                        // Show image if type is 'image' and URI is present
-                        <Image 
-                            source={{ uri: currentAsset.uri }} 
-                            style={styles.cardImage} 
-                            contentFit="fill" // or "contain", "fill", "none", "scale-down"
-                        />
-                    ) : (
-                        // Fallback placeholder
-                        <View style={styles.loadingPlaceholder}>
+                            style={{ flex: 1, width: '100%', height: '100%' }}
+                            contentFit="cover"
+                            />
+                        ) : assets[assetPointer]?.mediaType === 'photo' && assets[assetPointer]?.uri ? (
+                            <Image
+                            source={{ uri: assets[assetPointer].uri }}
+                            style={styles.cardImage}
+                            contentFit="fill" // or "contain", "cover", etc.
+                            />
+                        ) : (
+                            <View style={styles.loadingPlaceholder}>
                             <Text style={styles.loadingText}>Loading Asset...</Text>
-                        </View>
-                    )}
-
+                            </View>
+                        )
+                    }
                 </Animated.View>
             </GestureDetector>
         </View>

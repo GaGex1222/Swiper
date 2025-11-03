@@ -1,17 +1,17 @@
+import { deleteTrashItems, getTrashItems, TrashItem } from '@/utils/storageFunctions';
+import { Feather } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Dimensions,
   ActivityIndicator,
-  Image,
+  Dimensions,
   ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { Feather } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { deleteTrashItems, getTrashItems, TrashItem } from '@/utils/storageFunctions';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const ITEM_SIZE = SCREEN_WIDTH / 3 - 20;
@@ -58,7 +58,9 @@ export default function Trash() {
   };
 
   const deleteSubmit = async () => {
-    await deleteTrashItems(selectedItems);
+    const success = await deleteTrashItems(selectedItems);
+    if(!success) return
+    
     setTrashItems((prev) => prev.filter(item => !selectedItems.includes(item.id)));
     setSelectedItems([]);
   }
@@ -100,6 +102,7 @@ export default function Trash() {
         >
           {trashItems.map((item) => {
             const isSelected = selectedItems.includes(item.id);
+            console.log(item.uri)
             return (
               <TouchableOpacity
                 key={item.id}
@@ -107,7 +110,7 @@ export default function Trash() {
                 style={[styles.assetContainer, isSelected && styles.selectedBorder]}
                 activeOpacity={0.8}
               >
-                <Image source={{ uri: "https://images.unsplash.com/photo-1493612276216-ee3925520721" }} style={styles.thumbnail} />
+                <Image source={{ uri: item.uri }} style={styles.thumbnail} />
 
                 {isSelected && (
                   <View style={styles.selectionOverlay}>
@@ -203,7 +206,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 5,
     right: 5,
-    backgroundColor: 'rgba(0,0,0,0.3)',
     borderRadius: 50,
     padding: 2,
   },
