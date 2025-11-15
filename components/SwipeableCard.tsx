@@ -39,12 +39,11 @@ export const SwipableCard: React.FC = () => {
     }
     );
 
-    const loadNewAssets = async (): Promise<Asset[]> => {
-    const assetsResult = await getRandomAsset();
-    if (!assetsResult || !assetsResult.length) return []; // guard against empty
-    setAssets(assetsResult);
-    setAssetPointer(0); // reset pointer when new assets load
-    return assetsResult;
+    const loadNewAssets = async () => {
+        const assetsResult = await getRandomAsset();
+        if (!assetsResult || !assetsResult.length) return []; // guard against empty
+        setAssets(assetsResult);
+        setAssetPointer(0); // reset pointer when new assets load
     };
 
     useEffect(() => {
@@ -54,23 +53,23 @@ export const SwipableCard: React.FC = () => {
 
     // Placeholder function for swipe end. Logs the action and resets the card position.
     const handleTestSwipeEnd = useCallback(async (direction: 'left' | 'right') => {
-    const currentAsset = assets?.[assetPointer];
-    if (!currentAsset) {
-        await loadNewAssets(); // fetch new assets
-        return; // wait until next render
-    }
+        const currentAsset = assets?.[assetPointer];
+        if (assets.length - 1 == assetPointer) {
+            console.log("Cant find asset, loading new assets")
+            await loadNewAssets(); // fetch new assets
+        }
 
-    if (direction === 'left') {
-        await addTrashItem({
-        id: currentAsset.id,
-        mediaType: currentAsset.mediaType as "photo" | "video",
-        uri: currentAsset.uri,
-        });
-    }
+        if (direction === 'left') {
+            await addTrashItem({
+            id: currentAsset.id,
+            mediaType: currentAsset.mediaType as "photo" | "video",
+            uri: currentAsset.uri,
+            });
+        }
 
-    setAssetPointer(prev => prev + 1);
-    translateX.value = 0;
-    translateY.value = 0;
+        setAssetPointer(prev => prev + 1);
+        translateX.value = 0;
+        translateY.value = 0;
     }, [assetPointer, assets, translateX, translateY]);
 
     // --- Gesture Definition using the modern API (Gesture.Pan) ---
